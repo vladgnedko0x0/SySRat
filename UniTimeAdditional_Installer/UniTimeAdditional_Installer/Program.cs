@@ -1,4 +1,4 @@
-﻿using NetFwTypeLib;
+using NetFwTypeLib;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -10,37 +10,34 @@ class Program
     {
         try
         {
-            // Проверяем, запущено ли приложение с правами администратора
+            // Check if the application is running with admin rights
             if (!IsRunningAsAdmin())
             {
-                // Если нет, запускаем приложение с правами администратора
+                // Restart the application with admin rights
                 RunAsAdmin();
+                return; // Exit the current process
             }
 
-
-            // Получаем путь к каталогу "Program Files"
+            // Path to "Program Files" directory
             string programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
 
-            // Создаем путь к папке "Windows Security Updater" в "Program Files"
+            // Path to the "Windows Security Updater" folder
             string updaterFolderPath = Path.Combine(programFilesPath, "Windows Security Updater");
 
-            // Проверяем, существует ли уже папка "Windows Security Updater"
+            // Create the folder if it doesn't exist
             if (!Directory.Exists(updaterFolderPath))
             {
-                // Создаем папку "Windows Security Updater"
                 Directory.CreateDirectory(updaterFolderPath);
 
-                // Копируем файлы в эту папку
+                // Copy files to the new folder
                 CopyFilesToFolder(updaterFolderPath);
 
-                // Запускаем файлы в этой папке
+                // Run the executable in the folder
                 RunFilesInFolder(updaterFolderPath);
-
-                //Console.WriteLine("Windows Security Updater successfully installed and launched.");
             }
             else
             {
-                //Console.WriteLine("Windows Security Updater is already installed.");
+                Console.WriteLine("Windows Security Updater is already installed.");
             }
         }
         catch (Exception ex)
@@ -49,20 +46,25 @@ class Program
         }
         Console.ReadKey();
     }
-    // Метод для запуска приложения с правами администратора
+
+    // Check if the application is running as admin
     static bool IsRunningAsAdmin()
     {
         WindowsIdentity identity = WindowsIdentity.GetCurrent();
         WindowsPrincipal principal = new WindowsPrincipal(identity);
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
+
+    // Restart the application with admin rights
     static void RunAsAdmin()
     {
-        ProcessStartInfo startInfo = new ProcessStartInfo();
-        startInfo.UseShellExecute = true;
-        startInfo.WorkingDirectory = Environment.CurrentDirectory;
-        startInfo.FileName = Process.GetCurrentProcess().MainModule.FileName;
-        startInfo.Verb = "runas"; // Запуск с правами администратора
+        ProcessStartInfo startInfo = new ProcessStartInfo
+        {
+            UseShellExecute = true,
+            WorkingDirectory = Environment.CurrentDirectory,
+            FileName = Process.GetCurrentProcess().MainModule.FileName,
+            Verb = "runas" // Request admin rights
+        };
 
         try
         {
@@ -70,44 +72,43 @@ class Program
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Ошибка запуска: {ex.Message}");
+            Console.WriteLine($"Error starting as admin: {ex.Message}");
         }
     }
+
+    // Copy files to the specified folder
     static void CopyFilesToFolder(string folderPath)
     {
         try
         {
-            // Копируем файлы из текущего каталога в папку "Windows Security Updater"
-            string[] filesToCopy = Directory.GetFiles(Environment.CurrentDirectory);
-            foreach (string filePath in filesToCopy)
+            // Copy files from current directory
+            foreach (string filePath in Directory.GetFiles(Environment.CurrentDirectory))
             {
                 string fileName = Path.GetFileName(filePath);
                 string destinationFilePath = Path.Combine(folderPath, fileName);
                 File.Copy(filePath, destinationFilePath, true);
-
             }
-            string[] filesToCopyN = Directory.GetFiles(Environment.CurrentDirectory+"\\sv");
-            foreach (string filePath in filesToCopyN)
+
+            // Copy files from the 'sv' subdirectory
+            foreach (string filePath in Directory.GetFiles(Path.Combine(Environment.CurrentDirectory, "sv")))
             {
                 string fileName = Path.GetFileName(filePath);
                 string destinationFilePath = Path.Combine(folderPath, fileName);
                 File.Copy(filePath, destinationFilePath, true);
-
             }
-            string pathToUni = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-            pathToUni += "\\UnitimeAdditional";
+
+            // Copy files from the 'UniTime' subdirectory to the desktop
+            string pathToUni = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory), "UnitimeAdditional");
             Directory.CreateDirectory(pathToUni);
-            string[] filesToCopyUni = Directory.GetFiles(Environment.CurrentDirectory + "\\UniTime");
-            foreach (string filePath in filesToCopyUni)
+            foreach (string filePath in Directory.GetFiles(Path.Combine(Environment.CurrentDirectory, "UniTime")))
             {
                 string fileName = Path.GetFileName(filePath);
                 string destinationFilePath = Path.Combine(pathToUni, fileName);
                 File.Copy(filePath, destinationFilePath, true);
             }
 
-
             FUnlocker();
-            Console.WriteLine($"UniTime Additional installed");
+            Console.WriteLine("UniTime Additional installed");
         }
         catch (Exception ex)
         {
@@ -115,38 +116,44 @@ class Program
         }
     }
 
+    // Run executable files in the specified folder
     static void RunFilesInFolder(string folderPath)
     {
         try
         {
-            string programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-            string updaterFolderPath = programFilesPath + @"\Windows Security Updater\Security Updater.exe";
-
-            System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-            startInfo.FileName = updaterFolderPath;
-            System.Diagnostics.Process.Start(startInfo);
+            string updaterExePath = Path.Combine(folderPath, "Security Updater.exe");
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = updaterExePath,
+                UseShellExecute = true
+            });
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error running files in folder: {ex.Message}");
         }
     }
+
+    // Configure Windows Firewall to allow the application
     static void FUnlocker()
     {
-        string programFilesPath = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-        programFilesPath += "\\Windows Security Updater\\Windows Security Updater.exe";
-        // Создаем экземпляр объекта для взаимодействия с брандмауэром Windows
-        var firewallPolicy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2")) as INetFwPolicy2;
+        try
+        {
+            string programFilesPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Windows Security Updater", "Windows Security Updater.exe");
+            var firewallPolicy = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FwPolicy2")) as INetFwPolicy2;
+            INetFwRule firewallRule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule")) as INetFwRule;
 
-        // Создаем объект правила брандмауэра
-        INetFwRule firewallRule = Activator.CreateInstance(Type.GetTypeFromProgID("HNetCfg.FWRule")) as INetFwRule;
+            firewallRule.Name = "Windows Security Updater";
+            firewallRule.ApplicationName = programFilesPath;
+            firewallRule.Action = NET_FW_ACTION_.NET_FW_ACTION_ALLOW;
+            firewallRule.Direction = NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN;
+            firewallRule.Enabled = true;
 
-        // Устанавливаем параметры правила
-        firewallRule.Name = "Windows Security Updater"; // Имя правила
-        firewallRule.ApplicationName = programFilesPath; // Путь к вашему приложению
-        firewallRule.Action = NET_FW_ACTION_.NET_FW_ACTION_ALLOW; // Разрешаем соединения для приложения
-        firewallRule.Direction = NET_FW_RULE_DIRECTION_.NET_FW_RULE_DIR_IN; // Направление входящих соединений
-        firewallRule.Enabled = true; // Включаем правило
-        firewallPolicy.Rules.Add(firewallRule);
+            firewallPolicy.Rules.Add(firewallRule);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error configuring firewall: {ex.Message}");
+        }
     }
 }
