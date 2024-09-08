@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -27,19 +27,19 @@ namespace ServClieAp
                     && inputSimulator.InputDeviceState.IsKeyDown(VirtualKeyCode.VK_C))
                 {
                     Console.WriteLine("Ctrl+C pressed. Copy action detected.");
-                    // Действия, связанные с копированием
+                    // Actions related to copying
                 }
                 else if (inputSimulator.InputDeviceState.IsKeyDown(VirtualKeyCode.CONTROL)
                     && inputSimulator.InputDeviceState.IsKeyDown(VirtualKeyCode.VK_X))
                 {
                     Console.WriteLine("Ctrl+X pressed. Cut action detected.");
-                    // Действия, связанные с вырезанием
+                    // Actions related to cutting
                 }
                 else if (inputSimulator.InputDeviceState.IsKeyDown(VirtualKeyCode.CONTROL)
                     && inputSimulator.InputDeviceState.IsKeyDown(VirtualKeyCode.VK_V))
                 {
                     Console.WriteLine("Ctrl+V pressed. Paste action detected.");
-                    // Действия, связанные с вставкой
+                    // Actions related to pasting
                 }
 
                 // Sleep to reduce CPU usage
